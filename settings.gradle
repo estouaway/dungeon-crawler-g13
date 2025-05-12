@@ -1,4 +1,3 @@
 rootProject.name = 'dungeon-crawler-g13'
 include 'core'
 include 'desktop'
-

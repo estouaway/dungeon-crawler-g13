@@ -1,22 +1,24 @@
-plugins {
-    id 'java'
+// Root build.gradle
+subprojects {
+    apply plugin: 'java'  // Apply the java plugin to all subprojects
+
+    group = 'org.example'
+    version = '1.0-SNAPSHOT'
+
+    repositories {
+        mavenCentral()  // Common repository for all modules
+    }
+
+    // Define dependencies common to all subprojects here (optional)
+    dependencies {
+        // Add any common dependencies here if needed
+    }
 }
 
-group = 'org.example'
-version = '1.0-SNAPSHOT'
+allprojects {
+    version = '1.0-SNAPSHOT'  // Set version globally
 
-repositories {
-    mavenCentral()
-}
-
-dependencies {
-    testImplementation platform('org.junit:junit-bom:5.10.0')
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    implementation 'com.badlogicgames.gdx:gdx:1.12.0'
-    implementation 'com.badlogicgames.gdx:gdx-backend-lwjgl3:1.12.0'
-    implementation 'com.badlogicgames.gdx:gdx-platform:1.12.0:natives-desktop'
-}
-
-test {
-    useJUnitPlatform()
+    repositories {
+        mavenCentral()  // All projects will use Maven Central
+    }
 }
