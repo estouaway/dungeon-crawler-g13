@@ -9,7 +9,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 /**
  * Main game screen handling rendering and game logic
  */
-public class GameScreen implements Screen, DungeonObserver {
+public class GameScreen implements Screen, IDungeonObserver {
     // Game state enum
     public enum GameState {
         PLAYING, TRANSITIONING
@@ -187,17 +187,5 @@ public class GameScreen implements Screen, DungeonObserver {
     public void onRoomChange(Room newRoom) {
         System.out.println("Room changed to type: " + newRoom.getRoomType());
         minimapRenderer.invalidate();
-    }
-
-    public GameState getGameState() {
-        return gameState;
-    }
-
-    public Player getPlayer() {
-        return player;
-    }
-
-    public DungeonLevel getCurrentLevel() {
-        return currentLevel;
     }
 }

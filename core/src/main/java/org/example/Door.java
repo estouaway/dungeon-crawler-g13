@@ -50,6 +50,7 @@ public class Door {
         }
 
         // Assign color based on direction
+        //maybe remove this
         setColorByDirection();
     }
 

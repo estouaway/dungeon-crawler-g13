@@ -7,7 +7,7 @@ import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 
 /**
- * Main game class - Entry point for the application
+ * Main game class
  */
 public class DungeonCrawler extends Game {
     private SpriteBatch batch;
@@ -25,7 +25,6 @@ public class DungeonCrawler extends Game {
         font = new BitmapFont();
         shapeRenderer = new ShapeRenderer();
 
-        // Start with a title screen
         setScreen(new TitleScreen(this));
     }
 
@@ -49,7 +48,6 @@ public class DungeonCrawler extends Game {
      * Start a new game
      */
     public void startNewGame() {
-        // Set the game screen
         setScreen(new GameScreen(this));
     }
 
@@ -65,20 +63,6 @@ public class DungeonCrawler extends Game {
      */
     public SpriteBatch getBatch() {
         return batch;
-    }
-
-    /**
-     * Get the font for text rendering
-     */
-    public BitmapFont getFont() {
-        return font;
-    }
-
-    /**
-     * Get the shape renderer
-     */
-    public ShapeRenderer getShapeRenderer() {
-        return shapeRenderer;
     }
 }
 

@@ -4,7 +4,8 @@ package org.example;
 public class Player {
     private float x, y;
     private float radius;
-    private float speed;
+    private float speed; // maybe get some items for speed
+    // add more properties.. strength, health...
 
     public Player(float x, float y, float radius) {
         this.x = x;

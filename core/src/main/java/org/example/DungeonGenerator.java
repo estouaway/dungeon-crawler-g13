@@ -293,7 +293,6 @@ public class DungeonGenerator {
 
     /**
      * Ensure that all rooms are connected in a single graph
-     * This is critical for a properly navigable dungeon
      */
     private void ensureFullConnectivity() {
         // vai buscar todos os grupos de salas que estao desconectadas umas das outras

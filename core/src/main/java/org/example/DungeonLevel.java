@@ -17,7 +17,7 @@ public class DungeonLevel {
         EMPTY, OBSTACLE_LIGHT, OBSTACLE_MEDIUM, OBSTACLE_HEAVY, SPECIAL
     }
 
-    private final List<DungeonObserver> observers = new ArrayList<>();
+    private final List<IDungeonObserver> observers = new ArrayList<>();
 
     /**
      * Creates a new dungeon level
@@ -29,7 +29,7 @@ public class DungeonLevel {
     /**
      * Add an observer to be notified of dungeon events
      */
-    public void addObserver(DungeonObserver observer) {
+    public void addObserver(IDungeonObserver observer) {
         observers.add(observer);
     }
 
@@ -58,7 +58,7 @@ public class DungeonLevel {
             currentRoom = rooms.getFirst();
 
             // Notify observers of new room
-            for (DungeonObserver observer : observers) {
+            for (IDungeonObserver observer : observers) {
                 observer.onRoomChange(currentRoom);
             }
         }
@@ -97,6 +97,8 @@ public class DungeonLevel {
             float playerY = player.getY();
 
             // Expanded door bounds for better detection
+            // needed for better look when reaching a door
+            // need to review it
             Rectangle expandedBounds = new Rectangle(
                     doorBounds.x - 10,
                     doorBounds.y - 10,
@@ -152,7 +154,7 @@ public class DungeonLevel {
                 currentRoom = nextRoom;
 
                 // Notify observers
-                for (DungeonObserver observer : observers) {
+                for (IDungeonObserver observer : observers) {
                     observer.onRoomChange(currentRoom);
                 }
 

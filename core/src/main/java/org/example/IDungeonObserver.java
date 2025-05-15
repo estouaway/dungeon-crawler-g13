@@ -3,7 +3,7 @@ package org.example;
 /**
  * Interface for observing changes in the dungeon
  */
-public interface DungeonObserver {
+public interface IDungeonObserver {
     /**
      * Called when the dungeon level changes
      * @param newLevel The new dungeon level

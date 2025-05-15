@@ -127,7 +127,7 @@ public class RoomHelper {
                 y = roomCenterY + (float)Math.sin(angle) * distance;
             } else if (centerBias < 0) {
                 // Bias toward edges/corners
-                float edgeBias = -centerBias; // Convert to positive for calculation
+                float edgeBias = -centerBias;
 
                 // Generate coordinates based on edge bias
                 if (MathUtils.randomBoolean()) {

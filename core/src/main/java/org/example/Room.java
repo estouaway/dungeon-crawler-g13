@@ -22,10 +22,10 @@ public class Room {
     private static final int ROOM_Y = DungeonCrawler.BOTTOM_UI_HEIGHT + 20;
 
     private int id;
-    private Rectangle bounds; // Room boundaries
-    private List<Obstacle> obstacles; // Obstacles like pillars
-    private Map<Direction, Door> doors; // Doors on each side
-    private DungeonLevel.RoomType roomType; // Room type for variety
+    private Rectangle bounds;
+    private List<Obstacle> obstacles;
+    private Map<Direction, Door> doors;
+    private DungeonLevel.RoomType roomType;
     private Color floorColor;
 
     // Enum for door directions
@@ -40,7 +40,7 @@ public class Room {
         this.doors = new HashMap<>();
         this.roomType = DungeonLevel.RoomType.EMPTY;
 
-        // Generate a slightly randomized floor color
+        // maybe floor colors for each type of room
         this.floorColor = new Color(
                 MathUtils.random(0.1f, 0.2f),
                 MathUtils.random(0.1f, 0.2f),
@@ -49,7 +49,6 @@ public class Room {
         );
     }
 
-    // Add a door in specified direction
     public void addDoor(Direction direction, Room connectedRoom) {
         Door door = new Door(ROOM_X, ROOM_Y, ROOM_WIDTH, ROOM_HEIGHT, direction, connectedRoom);
         doors.put(direction, door);
@@ -57,33 +56,26 @@ public class Room {
 
     // Generate random obstacles in the room
     public void generateObstacles(int minObstacles, int maxObstacles) {
-        // Clear existing obstacles
         obstacles.clear();
 
-        // Create a helper for this room
         RoomHelper helper = new RoomHelper(this);
 
-        // Random number of obstacles
         int numObstacles = MathUtils.random(minObstacles, maxObstacles);
 
-        // Delegate obstacle creation to the helper
         for (int i = 0; i < numObstacles; i++) {
             Obstacle obstacle = createObstacleForRoomType();
 
-            // Let helper find position and add the obstacle
             if (!helper.positionObstacle(obstacle)) {
-                // If positioning failed, stop adding more
                 break;
             }
 
-            // Add to our list
             obstacles.add(obstacle);
         }
     }
 
     // Helper method to create obstacles based on room type
+    // example logic for enemies
     private Obstacle createObstacleForRoomType() {
-        // Determine size based on room type
         int minSize = 20;
         int maxSize = 40;
 
@@ -203,6 +195,7 @@ public class Room {
     }
 
     // Check collisions with room boundaries CHANGE THIS TO PLAYER RESPONSABILITY
+    // logic not working very well need review
     public void constrainPlayer(Player player) {
         float playerX = player.getX();
         float playerY = player.getY();
