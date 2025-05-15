@@ -64,34 +64,29 @@ public class DungeonGenerator {
     }
 
     /**
-     * Create BSP tree by recursively splitting the dungeon area
+     * Simplified BSP tree creation - only keeps division orientation
      */
     private void createBSPTree() {
-        // Create root leaf
-        rootLeaf = new BSPLeaf(0, 0, DungeonCrawler.WINDOW_WIDTH, DungeonCrawler.WINDOW_HEIGHT - DungeonCrawler.TOP_UI_HEIGHT - DungeonCrawler.BOTTOM_UI_HEIGHT);
+        // Criar raiz com coordenadas lógicas (0,0)
+        rootLeaf = new BSPLeaf(0, 0);
         leaves.add(rootLeaf);
 
-        // Recursively split leaves until we have enough
+        // Dividir recursivamente até ter salas suficientes
         boolean splitOccurred = true;
         while (splitOccurred && countLeaves() < TargetLeafCount) {
             splitOccurred = false;
 
-            // Make a copy of the current leaves to avoid concurrent modification
+            // Copiar lista atual para evitar modificação concorrente
             List<BSPLeaf> currentLeaves = new ArrayList<>(leaves);
 
-            // Try to split each leaf
+            // Tentar dividir cada folha
             for (BSPLeaf leaf : currentLeaves) {
-                // Skip leaves that have already been split
+                // Pular folhas já divididas
                 if (leaf.leftChild != null || leaf.rightChild != null) {
                     continue;
                 }
 
-                // Skip leaves that are too small
-                if (leaf.width < DungeonCrawler.WINDOW_WIDTH / 6 || leaf.height < (DungeonCrawler.WINDOW_HEIGHT - DungeonCrawler.TOP_UI_HEIGHT - DungeonCrawler.BOTTOM_UI_HEIGHT) / 6) {
-                    continue;
-                }
-
-                // Split the leaf
+                // Dividir folha
                 if (splitLeaf(leaf)) {
                     splitOccurred = true;
                 }
@@ -113,66 +108,30 @@ public class DungeonGenerator {
     }
 
     /**
-     * Split a leaf into two child leaves
+     * Extremely simplified split - just creates children with division orientation
      */
     private boolean splitLeaf(BSPLeaf leaf) {
-        // Return if this leaf has already been split
+        // Verificar se já foi dividida
         if (leaf.leftChild != null || leaf.rightChild != null) {
             return false;
         }
 
-        // Determine split direction (horizontal or vertical)
-        boolean horizontalSplit;
+        // Decidir direção da divisão aleatoriamente ou baseado em alguma lógica simples
+        boolean horizontalSplit = MathUtils.randomBoolean();
+        leaf.horizontalSplit = horizontalSplit;
 
-        // If the leaf is wider than tall, split it vertically
-        if (leaf.width > leaf.height * 1.25) {
-            horizontalSplit = false;
-        }
-        // If the leaf is taller than wide, split it horizontally
-        else if (leaf.height > leaf.width * 1.25) {
-            horizontalSplit = true;
-        }
-        // Otherwise, choose a random direction
-        else {
-            horizontalSplit = MathUtils.randomBoolean();
-        }
-
-        // Calculate the minimum size for a split
-        int minSize = horizontalSplit ?
-                (DungeonCrawler.WINDOW_HEIGHT - DungeonCrawler.TOP_UI_HEIGHT - DungeonCrawler.BOTTOM_UI_HEIGHT) / 8 :
-                DungeonCrawler.WINDOW_WIDTH / 8;
-
-        // Calculate maximum split position
-        int maxSplitPosition = horizontalSplit ?
-                leaf.height - minSize :
-                leaf.width - minSize;
-
-        // Return false if the leaf is too small to split
-        if (maxSplitPosition <= minSize) {
-            return false;
-        }
-
-        // Determine split position with some randomness
-        // Avoid perfectly even splits by using random range between 30% and 70%
-        int splitPosition;
+        // Criar filhos com coordenadas lógicas relativas
         if (horizontalSplit) {
-            splitPosition = leaf.y + MathUtils.random((int)(leaf.height * 0.3f), (int)(leaf.height * 0.7f));
+            // Divisão horizontal (cima/baixo)
+            leaf.leftChild = new BSPLeaf(leaf.x, leaf.y - 1); // Filho acima
+            leaf.rightChild = new BSPLeaf(leaf.x, leaf.y + 1); // Filho abaixo
         } else {
-            splitPosition = leaf.x + MathUtils.random((int)(leaf.width * 0.3f), (int)(leaf.width * 0.7f));
+            // Divisão vertical (esquerda/direita)
+            leaf.leftChild = new BSPLeaf(leaf.x - 1, leaf.y); // Filho à esquerda
+            leaf.rightChild = new BSPLeaf(leaf.x + 1, leaf.y); // Filho à direita
         }
 
-        // Create child leaves
-        if (horizontalSplit) {
-            // Horizontal split
-            leaf.leftChild = new BSPLeaf(leaf.x, leaf.y, leaf.width, splitPosition - leaf.y);
-            leaf.rightChild = new BSPLeaf(leaf.x, splitPosition, leaf.width, leaf.height - (splitPosition - leaf.y));
-        } else {
-            // Vertical split
-            leaf.leftChild = new BSPLeaf(leaf.x, leaf.y, splitPosition - leaf.x, leaf.height);
-            leaf.rightChild = new BSPLeaf(splitPosition, leaf.y, leaf.width - (splitPosition - leaf.x), leaf.height);
-        }
-
-        // Add child leaves to the list
+        // Adicionar à lista
         leaves.add(leaf.leftChild);
         leaves.add(leaf.rightChild);
 
@@ -183,18 +142,6 @@ public class DungeonGenerator {
      * Generate rooms based on the BSP tree
      */
     private void generateRooms() {
-        // Count the number of terminal leaves (potential room locations)
-        int availableRooms = 0;
-        for (BSPLeaf leaf : leaves) {
-            if (leaf.leftChild == null && leaf.rightChild == null) {
-                availableRooms++;
-            }
-        }
-
-        // Determine how many rooms to actually create
-        int roomsToCreate = Math.min(TargetLeafCount, availableRooms);
-
-        // Find terminal leaves (those without children)
         List<BSPLeaf> terminalLeaves = new ArrayList<>();
         for (BSPLeaf leaf : leaves) {
             if (leaf.leftChild == null && leaf.rightChild == null) {
@@ -202,43 +149,38 @@ public class DungeonGenerator {
             }
         }
 
-        // Sort leaves by distance from center to create a natural progression
+        // Ordenar folhas por "distância" do centro lógico (0,0)
         terminalLeaves.sort((a, b) -> {
-            // Calculate center points
-            Point centerA = new Point(a.x + a.width / 2, a.y + a.height / 2);
-            Point centerB = new Point(b.x + b.width / 2, b.y + b.height / 2);
-
-            // Calculate distances from (0,0)
-            double distA = Math.sqrt(centerA.x * centerA.x + centerA.y * centerA.y);
-            double distB = Math.sqrt(centerB.x * centerB.x + centerB.y * centerB.y);
-
-            // Compare distances
+            double distA = Math.sqrt(a.x * a.x + a.y * a.y);
+            double distB = Math.sqrt(b.x * b.x + b.y * b.y);
             return Double.compare(distA, distB);
         });
 
-        // Create rooms for the closest N leaves
+        // Criar salas
+        int roomsToCreate = Math.min(TargetLeafCount, terminalLeaves.size());
         for (int i = 0; i < roomsToCreate; i++) {
             BSPLeaf leaf = terminalLeaves.get(i);
 
-            // Create room (using the standard fixed size)
+            // Criar sala
             Room room = new Room(i);
 
-            // Store the BSP position in the leaf
-            leaf.roomCenter = new Point(leaf.x + leaf.width / 2, leaf.y + leaf.height / 2);
+            // Armazenar centro para cálculos de direção
+            leaf.roomCenter = new Point(leaf.x, leaf.y);
             leaf.room = room;
 
-            // Assign room type based on distance from start
+            // Atribuir tipo de sala baseado no índice
             assignRoomType(room, i);
 
-            // Generate obstacles
+            // Gerar obstáculos
             generateRoomObstacles(room);
 
-            // Add to room list
+            // Adicionar à lista
             rooms.add(room);
 
-            // Initialize connection map for this room
+            // Inicializar mapa de conexões
             roomConnections.put(room, new HashMap<>());
         }
+
     }
 
     /**
@@ -246,21 +188,22 @@ public class DungeonGenerator {
      * Each connection follows a path through the BSP tree
      */
     private void connectRooms(BSPLeaf leaf) {
-        // Skip terminal leaves
+        // folhas terminais sai do metodo
+        // so nos interessa os nós internos q sao esses q geram ligacoes
         if (leaf.leftChild == null || leaf.rightChild == null) {
             return;
         }
 
-        // Find rooms in both child subtrees
+        // encontrar as duas salas de cada lado da divisao
         Room leftRoom = findClosestRoomInSubtree(leaf.leftChild);
         Room rightRoom = findClosestRoomInSubtree(leaf.rightChild);
 
-        // Connect the rooms if both exist
+        // se ambos existem, criar ligacao
         if (leftRoom != null && rightRoom != null) {
             connectRoomsWithDoors(leftRoom, rightRoom, leaf);
         }
 
-        // Recursively connect rooms in child subtrees
+        // chamada recursiva para todos os nós filho para garantir q todas as salas fiquem ligadas
         connectRooms(leaf.leftChild);
         connectRooms(leaf.rightChild);
     }
@@ -295,7 +238,6 @@ public class DungeonGenerator {
      * Connect two rooms with appropriate doors
      */
     private void connectRoomsWithDoors(Room room1, Room room2, BSPLeaf parentLeaf) {
-        // Find the leaves containing these rooms
         BSPLeaf leaf1 = findLeafContainingRoom(room1);
         BSPLeaf leaf2 = findLeafContainingRoom(room2);
 
@@ -303,13 +245,12 @@ public class DungeonGenerator {
             return;
         }
 
-        // Determine the logical direction based on the split orientation
+        // Determinar direções baseadas na orientação da divisão
         Room.Direction dir1, dir2;
 
-        // Check orientation of the split in the parent
-        if (parentLeaf.leftChild.y != parentLeaf.rightChild.y) {
-            // Horizontal split (top/bottom)
-            if (leaf1.roomCenter.y < leaf2.roomCenter.y) {
+        if (parentLeaf.horizontalSplit) {
+            // Divisão horizontal - salas estão acima/abaixo uma da outra
+            if (leaf1.y < leaf2.y) {
                 dir1 = Room.Direction.SOUTH;
                 dir2 = Room.Direction.NORTH;
             } else {
@@ -317,8 +258,8 @@ public class DungeonGenerator {
                 dir2 = Room.Direction.SOUTH;
             }
         } else {
-            // Vertical split (left/right)
-            if (leaf1.roomCenter.x < leaf2.roomCenter.x) {
+            // Divisão vertical - salas estão à esquerda/direita uma da outra
+            if (leaf1.x < leaf2.x) {
                 dir1 = Room.Direction.EAST;
                 dir2 = Room.Direction.WEST;
             } else {
@@ -327,13 +268,12 @@ public class DungeonGenerator {
             }
         }
 
-        // Only add doors if the direction is free
+        // Adicionar portas se as direções estiverem livres
         if (!room1.getDoors().containsKey(dir1) && !room2.getDoors().containsKey(dir2)) {
-            // Add doors
             room1.addDoor(dir1, room2);
             room2.addDoor(dir2, room1);
 
-            // Record connections
+            // Registrar conexões
             roomConnections.get(room1).put(dir1, room2);
             roomConnections.get(room2).put(dir2, room1);
         }
@@ -356,54 +296,55 @@ public class DungeonGenerator {
      * This is critical for a properly navigable dungeon
      */
     private void ensureFullConnectivity() {
-        // Step 1: Find all disconnected room groups
+        // vai buscar todos os grupos de salas que estao desconectadas umas das outras
         List<Set<Room>> roomGroups = findRoomGroups();
 
-        // If we already have a single connected dungeon, we're done
+        // se so houver um grupo, dungeon esta completa, todas as salas tao ligadas.
         if (roomGroups.size() <= 1) {
             return;
         }
 
-        // Step 2: Connect the disconnected groups
-        // Sort groups by size (descending) to connect larger groups first
+        // ordenar os grupos de sala do maior para o menor
         roomGroups.sort((a, b) -> Integer.compare(b.size(), a.size()));
 
-        // Connect each group to the largest group
+        // colocamos o grupo maior cmo principal
         Set<Room> mainGroup = roomGroups.getFirst();
 
+        // iniciamos o loop sobre os grupos restantes
         for (int i = 1; i < roomGroups.size(); i++) {
             Set<Room> currentGroup = roomGroups.get(i);
 
-            // Find the best pair of rooms to connect between the two groups
             Room mainGroupRoom = null;
             Room currentGroupRoom = null;
             Room.Direction mainToCurrentDir = null;
             Room.Direction currentToMainDir = null;
             int bestDistance = Integer.MAX_VALUE;
 
+
+            // para cada sala dos grupos, vms buscar a leaf para ter as coordenadas do roomcenter
             for (Room roomA : mainGroup) {
                 BSPLeaf leafA = findLeafContainingRoom(roomA);
                 if (leafA == null) continue;
 
                 for (Room roomB : currentGroup) {
-                    BSPLeaf leafB = findLeafContainingRoom(roomB);
-                    if (leafB == null) continue;
-
-                    // Calculate distance between room centers
-                    int dx = leafA.roomCenter.x - leafB.roomCenter.x;
-                    int dy = leafA.roomCenter.y - leafB.roomCenter.y;
-                    int distance = dx*dx + dy*dy; // Square distance is enough for comparing
-
-                    // Skip if either room already has 3 doors
+                    // skip se as salas ja tem 3 portas
                     if (roomConnections.get(roomA).size() >= 3 || roomConnections.get(roomB).size() >= 3) {
                         continue;
                     }
+
+                    BSPLeaf leafB = findLeafContainingRoom(roomB);
+                    if (leafB == null) continue;
+
+                    // calcula a distancia entre as duas salas
+                    int dx = leafA.roomCenter.x - leafB.roomCenter.x;
+                    int dy = leafA.roomCenter.y - leafB.roomCenter.y;
+                    int distance = dx*dx + dy*dy; //  a distancia quadratica é suficiente para comparacao
 
                     // Determine the best direction for connection
                     Room.Direction dirAtoB, dirBtoA;
 
                     if (Math.abs(dx) > Math.abs(dy)) {
-                        // More horizontal distance
+                        // mais distancia horizontal
                         if (dx > 0) {
                             dirAtoB = Room.Direction.WEST;
                             dirBtoA = Room.Direction.EAST;
@@ -412,7 +353,7 @@ public class DungeonGenerator {
                             dirBtoA = Room.Direction.WEST;
                         }
                     } else {
-                        // More vertical distance
+                        // mais distancia vertical
                         if (dy > 0) {
                             dirAtoB = Room.Direction.NORTH;
                             dirBtoA = Room.Direction.SOUTH;
@@ -421,10 +362,11 @@ public class DungeonGenerator {
                             dirBtoA = Room.Direction.NORTH;
                         }
                     }
-
-                    // Check if these directions are available
+                    // verifica se as direcoes estao disponiveis
                     if (!roomA.getDoors().containsKey(dirAtoB) && !roomB.getDoors().containsKey(dirBtoA)) {
                         if (distance < bestDistance) {
+                            // se a distancia entre as salas for menos que a melhor distancia encontrada
+                            // esta passa a ser a melhor distancia
                             bestDistance = distance;
                             mainGroupRoom = roomA;
                             currentGroupRoom = roomB;
@@ -435,7 +377,7 @@ public class DungeonGenerator {
                 }
             }
 
-            // Connect the best pair if found
+            // ligar o melhor par
             if (mainGroupRoom != null && currentGroupRoom != null) {
                 mainGroupRoom.addDoor(mainToCurrentDir, currentGroupRoom);
                 currentGroupRoom.addDoor(currentToMainDir, mainGroupRoom);
@@ -458,13 +400,11 @@ public class DungeonGenerator {
         List<Set<Room>> roomGroups = new ArrayList<>();
         Set<Room> processedRooms = new HashSet<>();
 
-        // Process each unprocessed room
         for (Room startRoom : rooms) {
             if (processedRooms.contains(startRoom)) {
-                continue; // Skip if already in a group
+                continue; // skip se sala ja foi processada
             }
 
-            // Create a new group starting from this room
             Set<Room> currentGroup = new HashSet<>();
             Queue<Room> queue = new LinkedList<>();
 
@@ -472,12 +412,15 @@ public class DungeonGenerator {
             currentGroup.add(startRoom);
             processedRooms.add(startRoom);
 
-            // BFS to find all connected rooms
+            // BFS busca em largura
+            // ciclo enquanto houver salas na queue.
             while (!queue.isEmpty()) {
+                // vai buscar a proxima sala na queue e remove-a da queue
                 Room currentRoom = queue.poll();
 
-                // Add all connected rooms to the group
+                // verifica se a sala ja tem ligacao e retorna-as
                 for (Room connectedRoom : roomConnections.get(currentRoom).values()) {
+                    // verifica as q foram processadas e adiciona-as a queue
                     if (!processedRooms.contains(connectedRoom)) {
                         queue.add(connectedRoom);
                         currentGroup.add(connectedRoom);
@@ -486,10 +429,12 @@ public class DungeonGenerator {
                 }
             }
 
-            // Add the group to our list
+            // qd a busca termina o grupo devera conter todas as salas ligadas entre si
+            // o  loop principal vai continuar para encontrar outros grupos , se houverem
             roomGroups.add(currentGroup);
         }
 
+        // no fim retorna todos os grupos ligados
         return roomGroups;
     }
 
@@ -571,7 +516,6 @@ public class DungeonGenerator {
                     room1.addDoor(dir1, room2);
                     room2.addDoor(dir2, room1);
 
-                    // Record connections
                     roomConnections.get(room1).put(dir1, room2);
                     roomConnections.get(room2).put(dir2, room1);
                     break;
@@ -708,7 +652,6 @@ public class DungeonGenerator {
      * Assign a room type based on index and with some randomness
      */
     private void assignRoomType(Room room, int index) {
-        // First room is always easier
         if (index == 0) {
             room.setRoomType(DungeonLevel.RoomType.EMPTY);
             return;
@@ -720,19 +663,16 @@ public class DungeonGenerator {
             return;
         }
 
-        // Others have randomized types with increasing difficulty
+        // Calculate progression factor (0.0 to 1.0)
+        float progressFactor = (float)index / TargetLeafCount;
+
+        // Random roll with adjusted probabilities based on progression
         int typeRoll = MathUtils.random(100);
-        DungeonLevel.RoomType type = getRoomType((float) index, typeRoll);
 
-        room.setRoomType(type);
-    }
-
-    private DungeonLevel.RoomType getRoomType(float index, int typeRoll) {
+        // Determine room type based on roll and progression
         DungeonLevel.RoomType type;
 
-        // Adjust probabilities based on room index (later rooms more difficult)
-        float progressFactor = index / TargetLeafCount;
-
+        // TODO Change obstacles to enemie density for example
         if (typeRoll < 20 - progressFactor * 15) {
             type = DungeonLevel.RoomType.EMPTY;
         } else if (typeRoll < 50 - progressFactor * 20) {
@@ -744,7 +684,8 @@ public class DungeonGenerator {
         } else {
             type = DungeonLevel.RoomType.SPECIAL;
         }
-        return type;
+
+        room.setRoomType(type);
     }
 
     /**
@@ -784,16 +725,15 @@ public class DungeonGenerator {
      * BSP Leaf class (represents a node in the BSP tree)
      */
     private static class BSPLeaf {
-        int x, y, width, height;
+        int x, y; // Apenas para posição lógica, não precisamos de coordenadas precisas
         BSPLeaf leftChild, rightChild;
         Room room;
-        Point roomCenter;
+        Point roomCenter; // Manter para cálculo de direções
+        boolean horizontalSplit; // Para armazenar a orientação da divisão
 
-        public BSPLeaf(int x, int y, int width, int height) {
+        public BSPLeaf(int x, int y) {
             this.x = x;
             this.y = y;
-            this.width = width;
-            this.height = height;
         }
     }
 }
