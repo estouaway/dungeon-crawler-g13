@@ -16,6 +16,11 @@ public class TransitionManager {
     private Room.Direction transitionDirection;
     private float transitionTimer = 0;
 
+    /**
+     * Create a new room helper for a specific room
+     * @param level Dungeon level
+     * @param player The player
+     */
     public TransitionManager(DungeonLevel level, Player player) {
         this.level = level;
         this.player = player;

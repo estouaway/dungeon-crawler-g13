@@ -33,9 +33,6 @@ public class GameScreen implements Screen, IDungeonObserver {
     private boolean debugMode = false;
     private boolean showMinimap = false;
 
-    /**
-     * Constructor
-     */
     public GameScreen(DungeonCrawler game) {
         this.game = game;
     }
