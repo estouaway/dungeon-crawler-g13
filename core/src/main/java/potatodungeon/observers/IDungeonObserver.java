@@ -1,4 +1,4 @@
-package potatodungeon;
+package potatodungeon.observers;
 
 import potatodungeon.world.Room;
 

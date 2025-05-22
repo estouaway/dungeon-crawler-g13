@@ -294,6 +294,8 @@ public class DungeonGenerator {
         return null;
     }
 
+
+    // TODO review this code sometimes room dont have connections or the dungeon is not fully connected
     /**
      * Ensure that all rooms are connected in a single graph
      */
@@ -733,8 +735,8 @@ public class DungeonGenerator {
         int x, y; // Apenas para posição lógica, não precisamos de coordenadas precisas
         BSPLeaf leftChild, rightChild;
         Room room;
-        Point roomCenter; // Manter para cálculo de direções
-        boolean horizontalSplit; // Para armazenar a orientação da divisão
+        Point roomCenter;
+        boolean horizontalSplit; // Para armazenar a orientação da divisão e depois gerar as portas
 
         public BSPLeaf(int x, int y) {
             this.x = x;

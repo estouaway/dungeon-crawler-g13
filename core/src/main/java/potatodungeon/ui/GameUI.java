@@ -1,10 +1,11 @@
-package potatodungeon;
+package potatodungeon.ui;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import potatodungeon.DungeonCrawler;
 import potatodungeon.entities.Player;
 import potatodungeon.world.DungeonLevel;
 import potatodungeon.world.Room;

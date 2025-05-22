@@ -6,13 +6,17 @@ import com.badlogic.gdx.Screen;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import potatodungeon.*;
+import potatodungeon.controllers.PlayerController;
 import potatodungeon.entities.Player;
 import potatodungeon.entities.PlayerFactory;
 import potatodungeon.managers.TransitionManager;
+import potatodungeon.observers.IDungeonObserver;
 import potatodungeon.states.IGameState;
 import potatodungeon.states.PauseState;
 import potatodungeon.states.PlayState;
 import potatodungeon.states.TransitionState;
+import potatodungeon.ui.GameUI;
+import potatodungeon.ui.MinimapRenderer;
 import potatodungeon.world.DungeonLevel;
 import potatodungeon.world.Room;
 
@@ -103,6 +107,11 @@ public class GameScreen implements Screen, IDungeonObserver {
             if (showMinimap) {
                 minimapRenderer.initialize();
             }
+        }
+
+        // Return to title screen
+        if (Gdx.input.isKeyJustPressed(Input.Keys.ESCAPE)) {
+            game.returnToTitle();
         }
 
         // Pause só funciona se estiver no play state

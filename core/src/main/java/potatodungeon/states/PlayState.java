@@ -1,7 +1,7 @@
 package potatodungeon.states;
 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import potatodungeon.PlayerController;
+import potatodungeon.controllers.PlayerController;
 import potatodungeon.managers.TransitionManager;
 import potatodungeon.screens.GameScreen;
 

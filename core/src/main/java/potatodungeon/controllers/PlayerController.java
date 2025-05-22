@@ -1,4 +1,4 @@
-package potatodungeon;
+package potatodungeon.controllers;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
@@ -20,7 +20,7 @@ public class PlayerController {
     public void update(float delta) {
         boolean moved = false;
 
-        // Handle keyboard input
+        // inputs de teclado
         if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
             player.moveUp(delta);
             moved = true;
@@ -39,7 +39,7 @@ public class PlayerController {
         }
 
         if (moved) {
-            // Keep player within room boundaries
+            // matenm jogador dentro dos limites da sala
             level.constrainPlayerToRoom(player);
         }
     }
