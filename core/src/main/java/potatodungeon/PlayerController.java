@@ -1,10 +1,12 @@
-package org.example;
+package potatodungeon;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
+import potatodungeon.entities.Player;
+import potatodungeon.world.DungeonLevel;
 
 /**
- * Class for handling player input and movement
+ * Class que contrala o movimento do jogador
  */
 public class PlayerController {
     private final Player player;
@@ -16,24 +18,23 @@ public class PlayerController {
     }
 
     public void update(float delta) {
-        float speed = 200.0f * delta;
         boolean moved = false;
 
         // Handle keyboard input
         if (Gdx.input.isKeyPressed(Input.Keys.W) || Gdx.input.isKeyPressed(Input.Keys.UP)) {
-            player.moveY(speed);
+            player.moveUp(delta);
             moved = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.S) || Gdx.input.isKeyPressed(Input.Keys.DOWN)) {
-            player.moveY(-speed);
+            player.moveDown(delta);
             moved = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.A) || Gdx.input.isKeyPressed(Input.Keys.LEFT)) {
-            player.moveX(-speed);
+            player.moveLeft(delta);
             moved = true;
         }
         if (Gdx.input.isKeyPressed(Input.Keys.D) || Gdx.input.isKeyPressed(Input.Keys.RIGHT)) {
-            player.moveX(speed);
+            player.moveRight(delta);
             moved = true;
         }
 

@@ -1,4 +1,6 @@
-package org.example;
+package potatodungeon;
+
+import potatodungeon.world.Room;
 
 /**
  * Interface for observing changes in the dungeon

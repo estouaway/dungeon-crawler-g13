@@ -3,11 +3,11 @@ plugins {
     id 'application'
 }
 
-group = 'org.example'
+group = 'potatodungeon'
 version = '1.0-SNAPSHOT'
 
 application {
-    mainClass = 'org.example.DesktopLauncher'
+    mainClass = 'potatodungeon.DesktopLauncher'
     applicationDefaultJvmArgs = ["-XstartOnFirstThread"]
 }
 

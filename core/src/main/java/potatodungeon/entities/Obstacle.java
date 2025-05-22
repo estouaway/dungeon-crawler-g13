@@ -1,4 +1,4 @@
-package org.example;
+package potatodungeon.entities;
 
 /**
  * Represents an obstacle in a room
@@ -6,16 +6,14 @@ package org.example;
 public class Obstacle {
     private float x, y;
     private float radius;
-    private boolean square;
 
     /**
      * Create a new obstacle
      */
-    public Obstacle(float x, float y, float radius, boolean square) {
+    public Obstacle(float x, float y, float radius) {
         this.x = x;
         this.y = y;
         this.radius = radius;
-        this.square = square;
     }
 
     /**
@@ -24,13 +22,6 @@ public class Obstacle {
     public void setPosition(float x, float y) {
         this.x = x;
         this.y = y;
-    }
-
-    /**
-     * Check if the obstacle is a square
-     */
-    public boolean isSquare() {
-        return square;
     }
 
     /**

@@ -1,7 +1,11 @@
-package org.example;
+package potatodungeon.generation;
 
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
+import potatodungeon.entities.Obstacle;
+import potatodungeon.world.Door;
+import potatodungeon.world.Room;
+
 import java.util.ArrayList;
 import java.util.List;
 

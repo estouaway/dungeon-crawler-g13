@@ -1,10 +1,13 @@
-package org.example;
+package potatodungeon;
 
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
+import potatodungeon.entities.Player;
+import potatodungeon.world.DungeonLevel;
+import potatodungeon.world.Room;
 
 /**
  * Class responsible for rendering UI elements

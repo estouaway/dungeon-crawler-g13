@@ -1,6 +1,9 @@
-package org.example;
+package potatodungeon.generation;
 
 import com.badlogic.gdx.math.MathUtils;
+import potatodungeon.world.DungeonLevel;
+import potatodungeon.world.Room;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,12 +20,12 @@ import java.awt.Point;
  * Ensures all rooms are connected in a single graph
  */
 public class DungeonGenerator {
-    // Room and connection storage
-    private final List<Room> rooms = new ArrayList<>();
-
-    // Direct room connection tracking
-    // Key: Room, Value: Map of connected rooms by direction
+    // Grafo representado como node list com direções
+    // Key: Room (nó), Value: Map<Direction, Room> (direcoes)
     private final Map<Room, Map<Room.Direction, Room>> roomConnections = new HashMap<>();
+
+    // Rooms, meio redudante mas fico c acesso por indice as salas e mais facil para percorrer
+    private final List<Room> rooms = new ArrayList<>();
 
     // BSP tree
     private BSPLeaf rootLeaf;
@@ -648,37 +651,40 @@ public class DungeonGenerator {
     }
 
     /**
-     * Assign a room type based on index and with some randomness
+     * Atribui um type a sala com algoritmo de progressao
      */
     private void assignRoomType(Room room, int index) {
+        // feito para geracao de obstaculos por motivos de simplicidade e teste de conceito
+        // será utilizado na geracao de inimigos e dificuldade de salas
         if (index == 0) {
             room.setRoomType(DungeonLevel.RoomType.EMPTY);
             return;
-        }
+        } // primeira sala mais facil
 
-        // Last room is special
+        // talvez criar uma sala especial
         if (index == TargetLeafCount - 1) {
             room.setRoomType(DungeonLevel.RoomType.SPECIAL);
             return;
         }
 
-        // Calculate progression factor (0.0 to 1.0)
+        // calcula fator de progressao simples (0.0 to 1.0)
         float progressFactor = (float)index / TargetLeafCount;
 
-        // Random roll with adjusted probabilities based on progression
-        int typeRoll = MathUtils.random(100);
+        // random roll
+        int roll = MathUtils.random(100);
 
         // Determine room type based on roll and progression
         DungeonLevel.RoomType type;
 
-        // TODO Change obstacles to enemie density for example
-        if (typeRoll < 20 - progressFactor * 15) {
+        // valor base e taxa de reducao
+        // no inicio tem 20% hipoteses e descrsce 15 ate ao fim do progresso
+        if (roll < 20 - progressFactor * 15) {
             type = DungeonLevel.RoomType.EMPTY;
-        } else if (typeRoll < 50 - progressFactor * 20) {
+        } else if (roll < 50 - progressFactor * 20) {
             type = DungeonLevel.RoomType.OBSTACLE_LIGHT;
-        } else if (typeRoll < 80 - progressFactor * 10) {
+        } else if (roll < 80 - progressFactor * 10) {
             type = DungeonLevel.RoomType.OBSTACLE_MEDIUM;
-        } else if (typeRoll < 95) {
+        } else if (roll < 95) {
             type = DungeonLevel.RoomType.OBSTACLE_HEAVY;
         } else {
             type = DungeonLevel.RoomType.SPECIAL;

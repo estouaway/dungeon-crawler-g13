@@ -1,9 +1,13 @@
-package org.example;
+package potatodungeon.world;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
+import potatodungeon.entities.Obstacle;
+import potatodungeon.entities.Player;
+import potatodungeon.DungeonCrawler;
+import potatodungeon.generation.RoomHelper;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,7 +17,6 @@ import java.util.Map;
 // Room class representing a single dungeon room
 public class Room {
 
-    // Fixed room dimensions to fit window with UI margins
     private static final int ROOM_WIDTH = DungeonCrawler.WINDOW_WIDTH - 40; // 20px margin on each side
     private static final int ROOM_HEIGHT = DungeonCrawler.WINDOW_HEIGHT - DungeonCrawler.TOP_UI_HEIGHT - DungeonCrawler.BOTTOM_UI_HEIGHT - 40;
 
@@ -40,13 +43,8 @@ public class Room {
         this.doors = new HashMap<>();
         this.roomType = DungeonLevel.RoomType.EMPTY;
 
-        // maybe floor colors for each type of room
-        this.floorColor = new Color(
-                MathUtils.random(0.1f, 0.2f),
-                MathUtils.random(0.1f, 0.2f),
-                MathUtils.random(0.25f, 0.35f),
-                1.0f
-        );
+        // maybe floor colors for each type of room?
+        this.floorColor = new Color(0.15f, 0.15f, 0.3f, 1f);
     }
 
     public void addDoor(Direction direction, Room connectedRoom) {
@@ -89,15 +87,8 @@ public class Room {
 
         int obstacleSize = MathUtils.random(minSize, maxSize);
 
-        // Determine shape based on room type
-        boolean isSquare = MathUtils.randomBoolean(0.7f); // 70% chance of squares
-
-        if (roomType == DungeonLevel.RoomType.SPECIAL) {
-            isSquare = MathUtils.randomBoolean(0.3f); // 30% chance of squares in special rooms
-        }
-
         // Create the obstacle (without position yet)
-        return new Obstacle(0, 0, obstacleSize, isSquare);
+        return new Obstacle(0, 0, obstacleSize);
     }
 
     // Render the room and its contents
@@ -181,31 +172,31 @@ public class Room {
         };
     }
 
-    // review this
     private void drawObstacle(ShapeRenderer shapeRenderer, Obstacle obstacle, boolean isOutline) {
-        if (obstacle.isSquare()) {
-            // square
-            float halfSize = obstacle.getRadius();
-            shapeRenderer.rect(obstacle.getX() - halfSize, obstacle.getY() - halfSize,
-                    halfSize * 2, halfSize * 2);
-        } else {
-            // circle
-            shapeRenderer.circle(obstacle.getX(), obstacle.getY(), obstacle.getRadius());
-        }
+        float halfSize = obstacle.getRadius();
+        shapeRenderer.rect(obstacle.getX() - halfSize, obstacle.getY() - halfSize,
+                halfSize * 2, halfSize * 2);
     }
 
-    // Check collisions with room boundaries CHANGE THIS TO PLAYER RESPONSABILITY
-    // logic not working very well need review
     public void constrainPlayer(Player player) {
         float playerX = player.getX();
         float playerY = player.getY();
         float playerRadius = player.getRadius();
 
-        // Check if player is in any door first
-        boolean inDoor = false;
+        // verifica se jogador esta numa porta, so restringe movimento caso contrario
+        boolean inDoor = isPlayerInDoor(playerX, playerY);
+
+        if (!inDoor) {
+            constrainToWalls(player, playerX, playerY, playerRadius);
+        }
+
+        constrainToObstacles(player, playerX, playerY, playerRadius);
+    }
+
+    private boolean isPlayerInDoor(float playerX, float playerY) {
         for (Door door : doors.values()) {
             Rectangle doorBounds = door.getBounds();
-            // Use slightly expanded bounds for door detection
+            // expande ligeiramente a detecao da porta
             Rectangle expandedDoorBounds = new Rectangle(
                     doorBounds.x - 10,
                     doorBounds.y - 10,
@@ -214,93 +205,82 @@ public class Room {
             );
 
             if (expandedDoorBounds.contains(playerX, playerY)) {
-                inDoor = true;
-                break;
+                return true;
             }
         }
-
-        if (!inDoor) {
-            // Left wall
-            if (playerX - playerRadius < bounds.x) {
-                player.setPosition(bounds.x + playerRadius, playerY);
-            }
-            // Right wall
-            if (playerX + playerRadius > bounds.x + bounds.width) {
-                player.setPosition(bounds.x + bounds.width - playerRadius, playerY);
-            }
-            // Bottom wall
-            if (playerY - playerRadius < bounds.y) {
-                player.setPosition(playerX, bounds.y + playerRadius);
-            }
-            // Top wall
-            if (playerY + playerRadius > bounds.y + bounds.height) {
-                player.setPosition(playerX, bounds.y + bounds.height - playerRadius);
-            }
-        }
-
-        // Check obstacle collisions
-        for (Obstacle obstacle : obstacles) {
-            if (obstacle.isSquare()) {
-                // Square collision
-                float halfSize = obstacle.getRadius();
-                float obstacleLeft = obstacle.getX() - halfSize;
-                float obstacleRight = obstacle.getX() + halfSize;
-                float obstacleBottom = obstacle.getY() - halfSize;
-                float obstacleTop = obstacle.getY() + halfSize;
-
-                // Expanded rectangle for collision (includes player radius)
-                Rectangle expandedObstacle = new Rectangle(
-                        obstacleLeft - playerRadius,
-                        obstacleBottom - playerRadius,
-                        halfSize * 2 + playerRadius * 2,
-                        halfSize * 2 + playerRadius * 2
-                );
-
-                if (expandedObstacle.contains(playerX, playerY)) {
-                    // Find the closest edge to push player out
-                    float leftDist = Math.abs(playerX - obstacleLeft);
-                    float rightDist = Math.abs(playerX - obstacleRight);
-                    float topDist = Math.abs(playerY - obstacleTop);
-                    float bottomDist = Math.abs(playerY - obstacleBottom);
-
-                    // Find minimum distance
-                    float minDist = Math.min(Math.min(leftDist, rightDist), Math.min(topDist, bottomDist));
-
-                    // Push player in direction of minimum distance
-                    if (minDist == leftDist) {
-                        player.setPosition(obstacleLeft - playerRadius, playerY);
-                    } else if (minDist == rightDist) {
-                        player.setPosition(obstacleRight + playerRadius, playerY);
-                    } else if (minDist == topDist) {
-                        player.setPosition(playerX, obstacleTop + playerRadius);
-                    } else if (minDist == bottomDist) {
-                        player.setPosition(playerX, obstacleBottom - playerRadius);
-                    }
-                }
-            } else {
-                // Circle collision
-                float dx = playerX - obstacle.getX();
-                float dy = playerY - obstacle.getY();
-                float distance = (float) Math.sqrt(dx * dx + dy * dy);
-                float minDistance = playerRadius + obstacle.getRadius();
-
-                if (distance < minDistance) {
-                    // Push player away from obstacle
-                    float angle = (float) Math.atan2(dy, dx);
-                    float pushX = obstacle.getX() + (float) Math.cos(angle) * minDistance;
-                    float pushY = obstacle.getY() + (float) Math.sin(angle) * minDistance;
-                    player.setPosition(pushX, pushY);
-                }
-            }
-        }
-
+        return false;
     }
 
-    public int getId() { return id; }
-    public Rectangle getBounds() { return bounds; }
-    public Map<Direction, Door> getDoors() { return doors; }
-    public List<Obstacle> getObstacles() { return obstacles; }
-    public DungeonLevel.RoomType getRoomType() { return roomType; }
+    private void constrainToWalls(Player player, float playerX, float playerY, float playerRadius) {
+        float newX = playerX;
+        float newY = playerY;
+
+        if (playerX - playerRadius < bounds.x) {
+            newX = bounds.x + playerRadius;
+        }
+        if (playerX + playerRadius > bounds.x + bounds.width) {
+            newX = bounds.x + bounds.width - playerRadius;
+        }
+        if (playerY - playerRadius < bounds.y) {
+            newY = bounds.y + playerRadius;
+        }
+        if (playerY + playerRadius > bounds.y + bounds.height) {
+            newY = bounds.y + bounds.height - playerRadius;
+        }
+
+        if (newX != playerX || newY != playerY) {
+            player.setPosition(newX, newY);
+        }
+    }
+
+    private void constrainToObstacles(Player player, float playerX, float playerY, float playerRadius) {
+        for (Obstacle obstacle : obstacles) {
+            float halfSize = obstacle.getRadius();
+            float obstacleLeft = obstacle.getX() - halfSize;
+            float obstacleRight = obstacle.getX() + halfSize;
+            float obstacleBottom = obstacle.getY() - halfSize;
+            float obstacleTop = obstacle.getY() + halfSize;
+
+            // Encontrar o ponto mais próximo do quadrado ao centro do jogador
+            float closestX = Math.max(obstacleLeft, Math.min(playerX, obstacleRight));
+            float closestY = Math.max(obstacleBottom, Math.min(playerY, obstacleTop));
+
+            // Calcular distância do centro do jogador ao ponto mais próximo
+            float dx = playerX - closestX;
+            float dy = playerY - closestY;
+            float distance = (float) Math.sqrt(dx * dx + dy * dy);
+
+            // Se a distância for menor que o raio do jogador, há colisão
+            if (distance < playerRadius) {
+                // Empurrar jogador para fora
+                if (distance > 0) {
+                    float pushX = (dx / distance) * (playerRadius - distance);
+                    float pushY = (dy / distance) * (playerRadius - distance);
+                    player.setPosition(playerX + pushX, playerY + pushY);
+                }
+            }
+        }
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public Rectangle getBounds() {
+        return bounds;
+    }
+
+    public Map<Direction, Door> getDoors() {
+        return doors;
+    }
+
+    public List<Obstacle> getObstacles() {
+        return obstacles;
+    }
+
+    public DungeonLevel.RoomType getRoomType() {
+        return roomType;
+    }
 
     public void setRoomType(DungeonLevel.RoomType type) {
         this.roomType = type;

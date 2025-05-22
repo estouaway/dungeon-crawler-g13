@@ -1,4 +1,4 @@
-package org.example;
+package potatodungeon;
 
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
@@ -6,6 +6,9 @@ import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Vector2;
+import potatodungeon.world.Door;
+import potatodungeon.world.DungeonLevel;
+import potatodungeon.world.Room;
 
 import java.util.HashMap;
 import java.util.List;
