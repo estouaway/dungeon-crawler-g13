@@ -21,7 +21,7 @@ public class ConfigurationManager {
     };
 
     private final String[] colorNames = {
-            "Blue", "Green", "Yellow",
+            "Blue", "Red", "Green", "Yellow",
             "Purple", "Orange", "Cyan", "Pink"
     };
 
