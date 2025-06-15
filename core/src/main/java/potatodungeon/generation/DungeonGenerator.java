@@ -1,6 +1,7 @@
 package potatodungeon.generation;
 
 import com.badlogic.gdx.math.MathUtils;
+import potatodungeon.managers.EnemyManager;
 import potatodungeon.world.DungeonLevel;
 import potatodungeon.world.Room;
 
@@ -31,6 +32,7 @@ public class DungeonGenerator {
     private BSPLeaf rootLeaf;
     private final List<BSPLeaf> leaves = new ArrayList<>();
     private final int TargetLeafCount = 8;
+    private EnemyManager enemyManager = new EnemyManager();
 
     public DungeonGenerator() {
     }
@@ -64,6 +66,35 @@ public class DungeonGenerator {
         logRoomConnections();
 
         return rooms;
+    }
+
+    private void generateRoomEnemies(Room room) {
+        DungeonLevel.RoomType type = room.getRoomType();
+
+        int minEnemies = 0;
+        int maxEnemies = 0;
+
+        switch (type) {
+            case EMPTY -> maxEnemies = 1;
+            case OBSTACLE_LIGHT -> {
+                minEnemies = 1;
+                maxEnemies = 2;
+            }
+            case OBSTACLE_MEDIUM -> {
+                minEnemies = 2;
+                maxEnemies = 3;
+            }
+            case OBSTACLE_HEAVY -> {
+                minEnemies = 3;
+                maxEnemies = 4;
+            }
+            case SPECIAL -> {
+                minEnemies = 4;
+                maxEnemies = 5;
+            }
+        }
+
+        room.generateEnemies(minEnemies, maxEnemies);
     }
 
     /**
@@ -176,6 +207,10 @@ public class DungeonGenerator {
 
             // Gerar obstáculos
             generateRoomObstacles(room);
+
+            if (i > 0) { // Skip primeira sala (spawn do jogador)
+                generateRoomEnemies(room);
+            }
 
             // Adicionar à lista
             rooms.add(room);

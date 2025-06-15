@@ -19,6 +19,14 @@ import potatodungeon.ui.GameUI;
 import potatodungeon.ui.MinimapRenderer;
 import potatodungeon.world.DungeonLevel;
 import potatodungeon.world.Room;
+import potatodungeon.managers.EnemyManager;
+import potatodungeon.managers.BulletManager;
+import potatodungeon.entities.Enemy;
+import potatodungeon.entities.Bullet;
+import potatodungeon.entities.Obstacle;
+import com.badlogic.gdx.math.Vector2;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Main game screen handling rendering and game logic
@@ -26,6 +34,8 @@ import potatodungeon.world.Room;
 public class GameScreen implements Screen, IDungeonObserver {
     private final DungeonCrawler game;
 
+    private EnemyManager enemyManager;
+    private BulletManager bulletManager;
     private IGameState currentState;
     private PlayState playingState;
     private TransitionState transitionState;
@@ -69,6 +79,7 @@ public class GameScreen implements Screen, IDungeonObserver {
         minimapRenderer = new MinimapRenderer(shapeRenderer, game.getBatch(), currentLevel);
         transitionManager = new TransitionManager(currentLevel, player);
         playerController = new PlayerController(player, currentLevel);
+        bulletManager = BulletManager.getInstance();
     }
 
     private void initializeStates() {
@@ -85,10 +96,13 @@ public class GameScreen implements Screen, IDungeonObserver {
     public void render(float delta) {
         handleGlobalInput(); // F1, F8, etc.
 
+        updateEnemiesAndBullets(delta);
         currentState.update(delta);
 
         clearScreen();
         currentState.render(shapeRenderer);
+
+        renderBullets();
 
         // UI sempre visível
         gameUI.render(debugMode);
@@ -147,6 +161,63 @@ public class GameScreen implements Screen, IDungeonObserver {
         player.render(shapeRenderer);
     }
 
+    private void updateEnemiesAndBullets(float delta) {
+        if (currentState != playingState) {
+            return;
+        }
+
+        Vector2 playerPosition = new Vector2(player.getX(), player.getY());
+
+        // Atualizar jogador COM lista de inimigos
+        List<Enemy> currentEnemies = currentLevel.getCurrentRoom().getEnemies();
+        player.update(delta);
+
+        currentLevel.checkPlayerAttack(player);
+
+        // Atualizar inimigos
+        currentLevel.updateEnemies(delta, playerPosition);
+
+        // Obter obstáculos da sala atual
+        List<Vector2> obstaclePositions = getCurrentRoomObstacles();
+
+        // Atualizar balas
+        bulletManager.update(
+                delta,
+                playerPosition,
+                obstaclePositions,
+                currentLevel.getCurrentRoom().getBounds().width,
+                currentLevel.getCurrentRoom().getBounds().height
+        );
+    }
+
+    private List<Vector2> getCurrentRoomObstacles() {
+        List<Vector2> positions = new ArrayList<>();
+
+        Room currentRoom = currentLevel.getCurrentRoom();
+        if (currentRoom != null) {
+            for (Obstacle obstacle : currentRoom.getObstacles()) {
+                positions.add(new Vector2(obstacle.getX(), obstacle.getY()));
+            }
+        }
+
+        return positions;
+    }
+
+    private void renderBullets() {
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        shapeRenderer.setColor(1f, 1f, 0f, 1f); // Amarelo para balas
+
+        for (Bullet bullet : bulletManager.getBullets()) {
+            if (bullet.isActive()) {
+                Vector2 pos = bullet.getPosition();
+                shapeRenderer.circle(pos.x, pos.y, 3f); // Balas pequenas
+            }
+        }
+
+        shapeRenderer.end();
+    }
+
+
     @Override
     public void resize(int width, int height) {
     }
@@ -178,6 +249,7 @@ public class GameScreen implements Screen, IDungeonObserver {
     public void onRoomChange(Room newRoom) {
         System.out.println("Room changed to type: " + newRoom.getRoomType());
         minimapRenderer.invalidate();
+        bulletManager.clearBullets();
     }
 
     public DungeonCrawler getGame() { return game; }

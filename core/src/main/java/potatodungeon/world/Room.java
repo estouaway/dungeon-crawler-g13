@@ -4,10 +4,13 @@ import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.MathUtils;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
 import potatodungeon.entities.Obstacle;
 import potatodungeon.entities.Player;
 import potatodungeon.DungeonCrawler;
 import potatodungeon.generation.RoomHelper;
+import potatodungeon.entities.Enemy;
+import com.badlogic.gdx.math.MathUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +30,7 @@ public class Room {
     private int id;
     private Rectangle bounds;
     private List<Obstacle> obstacles;
+    private List<Enemy> enemies = new ArrayList<>();
     private Map<Direction, Door> doors;
     private DungeonLevel.RoomType roomType;
     private Color floorColor;
@@ -71,6 +75,33 @@ public class Room {
         }
     }
 
+    public void generateEnemies(int minEnemies, int maxEnemies) {
+        enemies.clear();
+
+        int enemyCount = MathUtils.random(minEnemies, maxEnemies);
+        RoomHelper roomHelper = new RoomHelper(this);
+
+        for (int i = 0; i < enemyCount; i++) {
+            Enemy.EnemyType enemyType = selectRandomEnemyType();
+
+            // Usar RoomHelper para encontrar posição válida
+            float[] position = roomHelper.findValidPosition(15f); // 15f = raio do inimigo
+
+            if (position != null) {
+                Enemy enemy = new Enemy(position[0], position[1], enemyType);
+                enemies.add(enemy);
+            } else {
+                System.out.println("Warning: Could not place enemy in room - no valid position found");
+            }
+        }
+    }
+
+    private Enemy.EnemyType selectRandomEnemyType() {
+        Enemy.EnemyType[] types = Enemy.EnemyType.values();
+        return types[MathUtils.random(types.length - 1)];
+    }
+
+
     // Helper method to create obstacles based on room type
     // example logic for enemies
     private Obstacle createObstacleForRoomType() {
@@ -97,6 +128,29 @@ public class Room {
         renderBorders(shapeRenderer);
         renderDoors(shapeRenderer);
         renderObstacles(shapeRenderer);
+
+        shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
+        for (Enemy enemy : enemies) {
+            if (enemy.isAlive()) {
+                Vector2 pos = enemy.getPosition();
+
+                // Cor baseada no tipo
+                switch (enemy.getType()) {
+                    case FAST_SHOOTER:
+                        shapeRenderer.setColor(1f, 0f, 0f, 1f); // Vermelho
+                        break;
+                    case NORMAL_SHOOTER:
+                        shapeRenderer.setColor(1f, 0.5f, 0f, 1f); // Laranja
+                        break;
+                    case SLOW_SHOOTER:
+                        shapeRenderer.setColor(0.8f, 0f, 0.8f, 1f); // Roxo
+                        break;
+                }
+
+                shapeRenderer.circle(pos.x, pos.y, 15f);
+            }
+        }
+        shapeRenderer.end();
     }
 
     private void renderFloor(ShapeRenderer shapeRenderer) {
@@ -260,6 +314,10 @@ public class Room {
                 }
             }
         }
+    }
+
+    public List<Enemy> getEnemies() {
+        return enemies;
     }
 
     public int getId() {
