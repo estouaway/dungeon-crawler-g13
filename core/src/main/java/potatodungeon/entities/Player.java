@@ -1,8 +1,14 @@
 package potatodungeon.entities;
 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-// Player class
+import potatodungeon.managers.ConfigurationManager;
+
+/**
+ * Representa o player
+ */
 public class Player {
+
+    private ConfigurationManager config;
     private float x, y;
     private float radius;
     private float speed; // maybe get some items for speed
@@ -10,12 +16,12 @@ public class Player {
 
     // só é chamado dentro do proprio package, neste caso, pela factory
     Player(float x, float y, float radius) {
+        this.config = ConfigurationManager.getInstance();
         this.x = x;
         this.y = y;
         this.radius = radius;
         this.speed = 200.0f;
     }
-
     public float getX() { return x; }
     public float getY() { return y; }
     public float getRadius() { return radius; }
@@ -28,7 +34,7 @@ public class Player {
 
     public void render(ShapeRenderer shapeRenderer) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(1, 0, 0, 1); // Red
+        shapeRenderer.setColor(this.config.getPlayerColor()); // Red
         shapeRenderer.circle(x, y, radius);
         shapeRenderer.end();
     }
@@ -49,6 +55,7 @@ public class Player {
         y -= speed * delta;
     }
 
+    // por implementar
     public void setSpeed(float speed) {
         this.speed = speed;
     }
