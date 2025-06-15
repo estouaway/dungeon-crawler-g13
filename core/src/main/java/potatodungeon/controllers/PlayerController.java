@@ -1,6 +1,7 @@
 package potatodungeon.controllers;
 
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 import potatodungeon.entities.Player;
 import potatodungeon.world.DungeonLevel;
 import potatodungeon.managers.ConfigurationManager;
@@ -37,6 +38,7 @@ public class PlayerController {
         }
         if (Gdx.input.isKeyPressed(config.getRightKey())) {
             player.moveRight(delta);
+            moved = true;
         }
 
         if (moved) {

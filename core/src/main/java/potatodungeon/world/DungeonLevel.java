@@ -2,6 +2,8 @@ package potatodungeon.world;
 
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.math.Rectangle;
+import com.badlogic.gdx.math.Vector2;
+import potatodungeon.entities.Enemy;
 import potatodungeon.entities.Player;
 import potatodungeon.generation.DungeonGenerator;
 import potatodungeon.observers.IDungeonObserver;
@@ -116,6 +118,39 @@ public class DungeonLevel {
         }
 
         return null;
+    }
+
+    public void updateEnemies(float deltaTime, Vector2 playerPosition) {
+        if (currentRoom != null) {
+            for (Enemy enemy : currentRoom.getEnemies()) {
+                enemy.update(deltaTime, playerPosition);
+            }
+
+            currentRoom.getEnemies().removeIf(enemy -> !enemy.isAlive());
+        }
+    }
+
+    public void checkPlayerAttack(Player player) {
+        if (currentRoom != null && player.isAttacking()) {
+            for (Enemy enemy : currentRoom.getEnemies()) {
+                if (enemy.isAlive()) {
+                    float distance = new Vector2(player.getX(), player.getY())
+                            .dst(enemy.getPosition());
+
+                    // Onda toca no inimigo quando a distância entre centros
+                    // for menor que (raio_da_onda + raio_do_inimigo)
+                    float enemyRadius = 15f;
+
+                    if (distance <= player.getShockwaveRadius() + enemyRadius) {
+                        enemy.kill();
+                        System.out.println("Enemy killed by shockwave!");
+                    }
+                }
+            }
+
+            // Remover inimigos mortos
+            currentRoom.getEnemies().removeIf(enemy -> !enemy.isAlive());
+        }
     }
 
     /**
